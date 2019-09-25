@@ -1,20 +1,20 @@
 
 # The name of your website.
-name: Holo Alfa
+name: try-except
 
 description:
 
   # Description of your site. This will show up in google.
-  meta: Holo Alfa is a minimalist, mobile first Jekyll theme with focus on readability and content.
+  meta: try-except is a tech blog
 
   # Description of your site. This will show up on the front page.
   subtitle: Holo Alfa is a minimalist, mobile first Jekyll theme with focus on readability and content. <a href="https://github.com/stijnvc/holo-alfa">&lt;/&gt; on Github</a>.
 
 author:
-  name: Dr. Jekyll # Change this!
+  name: Ajay Jain # Change this!
 
   # Necessary for contact page
-  email: your@email.com # Change this!
+  email: ajayjain360@gmail.com # Change this!
 
   # Optional text (html) to display after author name. Leave empty if you don't
   # want it.
