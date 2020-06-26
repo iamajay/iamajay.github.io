@@ -8,7 +8,7 @@ description:
   meta: try-except is a tech blog
 
   # Description of your site. This will show up on the front page.
-  subtitle: In a room full of top software designers, if two agree on the same thing, that’s a majority. <a href="https://github.com/iamajay">&lt;/&gt; My Github</a>.
+  subtitle: In a room full of top software designers, if two agree on the same thing, that’s a majority.
 
 author:
   name: Ajay Jain # Change this!
@@ -51,7 +51,7 @@ theme-color-attr: "#00f0ff"
 ms-tile-color: "#00f0ff"
 
 # Color used throughout the theme. Format: R, G, B.
-theme-color: 0, 240, 255 # Original: 0, 240, 255
+theme-color: 255, 145, 0# Original: 0, 240, 255
 
 # Text color used throughout the theme. Format: R, G, B.
 text-color: 0, 0, 0 # Original: 0, 0, 0
