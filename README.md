@@ -1,66 +1,78 @@
-# Holo Alfa Jekyll theme [![Build Status](https://travis-ci.org/steinvc/holo-alfa.svg?branch=master)](https://travis-ci.org/steinvc/holo-alfa) #
 
->This project is no longer maintained. It will probably still work fine though.
+<p align="center"><a href="https://sonali.netlify.app/"><img src="./assets/wedding.gif" width="150px" height="150px"/></a></p>
+<h1 align="center"><a href="https://sonali.netlify.app/">Wedding Invitation</a> :ring: <br> <br> SAVE THE DATE: NOV 29, 2020 <br> <a href="https://sonali.netlify.app/">sonali.netlify.app</a></h1>
 
-![Screenshot](http://i.imgur.com/Gi46aag.jpg)
+[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/vinitshahdeo/Wedding-Invitation?logo=github)](https://sonali.netlify.app/) [![Netlify Status](https://api.netlify.com/api/v1/badges/e945f101-f434-45e6-8c33-df855c6b2082/deploy-status)](https://app.netlify.com/sites/sonali/deploys) [![GitHub license](https://img.shields.io/github/license/vinitshahdeo/Wedding-Invitation?logo=github)](https://github.com/vinitshahdeo/Wedding-Invitation)
 
-Holo Alfa is a minimalist, mobile first Jekyll theme with focus on readability and content. Created for free and fun by Stijn. Also works great as a base to build your own theme on.
+## Wedding Invitation :ring:
 
-See it in action: http://steinvc.github.io/holo-alfa/.
+<details>
+  <summary><strong>View Invitation</strong></summary>
+  <a href="https://sonali.netlify.app/"><img src="./assets/img/sonali.jpeg" /></a>
+</details>
 
-## Feature highlights ##
+With the divine grace of the almighty,
+inviting you and your family to elder sister's wedding to be held on **29th November at [Ashirwad Garden](https://goo.gl/maps/5z5xX2hTYzU8VGEJ9), Ratu, Ranchi from 7:00 PM** onwards.
 
-* Mobile first design
-* Extensive content styling
-* Responsive video's (using [FitVids.JS](http://fitvidsjs.com/))
-* Support for authors and guest authors
-* Read time on articles
-* Disqus comments
-* Language localization
-* Automatic [og metadata](http://ogp.me/)
-* Automatic archive page (without plugins)
-* Automatic sitemap en RSS feed
-* Contact page (with working email form)
-* A lot of (optional) customization options (all in `_config.yml`)
+- [Download](https://github.com/vinitshahdeo/vinitshahdeo/raw/master/docs/Sonali%20%26%20Gagan.pdf) the Invitation card
 
-And much more.
+- Find [venue](https://goo.gl/maps/5z5xX2hTYzU8VGEJ9) on Google map
 
-## Getting started ##
+- Visit the [website](https://sonali.netlify.app/) for more details
 
-If you're new to Jekyll, check out http://jekyllrb.com/ and read up on Jekyll. It's worth it.
+- See the Facebook [post](https://www.facebook.com/vinit.shahdeo/posts/3521599654622390)
 
-* [Another great resource to learn about Jekyll](http://www.smashingmagazine.com/2014/08/build-blog-jekyll-github-pages/)
-* [Github's guide to using Jekyll with Pages](https://help.github.com/articles/using-jekyll-with-pages/)
+- See the [Tweet](https://twitter.com/Vinit_Shahdeo/status/1328570280705482752)
 
-### Installing ##
+```js
 
-As simple as forking the repository, and then clone it so you can edit the files locally.
+const newCouple = 'Sonali & Gagan';
 
-### Configuration ###
+// Nov 29, 2020
+const weddingDate = new Date(2020, 11, 29);
 
-Edit `_config.yml`!
+// Wedding venue: https://goo.gl/maps/5z5xX2hTYzU8VGEJ9
+const weddingVenue = new Location('Ashirwad Garden, Ranchi');
 
-You can find `_config.yml` in your site's root directory. This configuration file contains some necessary settings and some optional customization settings. **All settings are explained in `_config.yml` itself.** Also make sure to use the developement configuration file (`_config_dev.yml`) for running your site locally. This way you don't get your URLs mixed up.
+(function() {
+    newCouple.willTieKnot(weddingDate);
 
-There are some customizations that can't be done in `_config.yml`. These include:
+    // your presence is requested
+    (new Wedding()).acceptInvitation(
+        window.open('https://sonali.netlify.app/')
+    );
+})();
 
-* Editing the About, Contact and Archive page.
-* Adding or removing pages from the navigation. This can be done in `\_includes\navigation.html`.
-* The "thanks" page after a message has been send through the contact page: `thanks.md`
-* The gradient on cover images: `\_includes\gradient.css` (this is explained in `_config.yml`).
 
-Also make sure to replace the placeholder favicons and the `\img\og-image.jpg` with your own.
+```
 
-### Start the Jekyll server ###
+## Are you or your loved ones a *bride-to-be* or *groom-to-be*? 
+> Feel free to use this template to build your wedding website!
 
-You can learn how to do this by reading [this](https://help.github.com/articles/using-jekyll-with-pages/).
+To reuse this, follow the steps:
 
-> Tip: to run your site locally with `_config_dev.yml` as configuration file, use this command at the root of your site `bundle exec jekyll serve --config _config_dev.yml`.
+- *Replace the date in [script.js](https://github.com/vinitshahdeo/Wedding-Invitation/blob/master/js/script.js#L29) to have a timer running for your big day!*
 
-When everything is OK, your site should now be available at `http://localhost:4000`.
+```js
+// Set the date we're counting down to
+var countDownDate = new Date("Nov 29, 2020 00:00:00").getTime();
+```
 
-That's it.
+- *If you wish to change the track which plays on click, edit the `src` in [index.html](https://github.com/vinitshahdeo/Wedding-Invitation/blob/760c4aa437115fc365f5cb86a4b428b0e292b5ba/index.html#L69)*
 
----
+```html
+<div class="music">
+   <audio src="./assets/mp3/song.mp3" id="my_audio" loop="loop"></audio> 
+</div>
+```
 
-[MIT license](http://opensource.org/licenses/MIT)
+> <sup>Despite so many new Bollywood and English song options, I prefered to use two-decade-old song, **[Din Shagna Da](https://youtu.be/X0MDALpV29s)**! Ever attended a North Indian Wedding? As soon as the DJ plays [Din Shagna Da](https://youtu.be/Mj4eK5YViCs) song, it means that the much-awaited moment is here and the bride is all set to put her first foot forward to the wedding venue under a breathtaking phoolon ki chaadar. Let's keep the sky-high status of this song untouched! When the website is backed up with a soul-stirring track, the feeling becomes absolutely surreal. **Choose a heart-touching track!** :musical_note: :heart: </sup>
+
+
+### Do not forget to leave a star! :hugs:
+
+Tag me to share your wedding story on Twitter([@Vinit_Shahdeo](https://twitter.com/Vinit_Shahdeo)) :yellow_heart:
+
+<br><sup><i>With warm regards,<br>
+**Vinit Shahdeo**<i></sup><br>
+[![Twitter Follow @Vinit_Shahdeo](https://img.shields.io/twitter/follow/Vinit_Shahdeo?style=social)](https://twitter.com/Vinit_Shahdeo)
