@@ -1,4 +1,669 @@
-<!doctype html><title>photos-bridge</title>
-<h1>photos-bridge</h1>
-<p>Personal tool that copies my own iCloud photos to my own Google Photos accounts. Not a public service.</p>
-<p><a href="privacy.html">Privacy policy</a></p>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>photos-bridge</title>
+<meta name="description" content="photos-bridge moves new iCloud photos to the Google Photos account with the most free space.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  // Hide reveal targets before first paint, only when motion will run.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+</script>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --ink: #111111;
+    --muted: #6b6b6b;
+    --line: #e4e4e2;
+    --accent: #3b5bfd;
+    --acct-a: var(--accent);
+    --acct-b: var(--ink);
+    --acct-c: #b5b5b5;
+    --pad: clamp(1.25rem, 6vw, 6rem);
+    --max: 72rem;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 1.0625rem/1.6 'Inter Tight', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1, h2, p, figure { margin: 0; }
+  h1, h2 { font-weight: 500; letter-spacing: -0.035em; line-height: 1.02; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+
+  .motion .reveal { opacity: 0; }
+  .motion .hero .wrap { visibility: hidden; }
+  .line-mask { display: block; overflow: hidden; padding-bottom: .08em; }
+  .line-mask > span { display: block; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: absolute; inset: 0 0 auto; z-index: 2;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem var(--pad);
+    font-size: .95rem;
+  }
+  nav .logo { font-weight: 600; letter-spacing: -0.02em; }
+  nav a:not(.logo) { color: var(--muted); transition: color .2s; }
+  nav a:not(.logo):hover { color: var(--ink); }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex; align-items: center;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .orb {
+    position: absolute; left: 0; top: 0; z-index: -1;
+    width: 46rem; height: 46rem;
+    margin: -23rem 0 0 -23rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 91, 253, .16) 0%, rgba(59, 91, 253, .06) 40%, transparent 70%);
+    pointer-events: none;
+    will-change: transform;
+    transform: translate(60vw, 45vh);
+  }
+  .hero h1 { font-size: clamp(2.75rem, 8.5vw, 7.5rem); }
+  .hero h1 .soft { color: #a3a3a3; }
+  .hero p { margin-top: 1.75rem; max-width: 28rem; color: var(--muted); font-size: 1.125rem; }
+  .cta { margin-top: 2.5rem; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: .75rem;
+    padding: 1rem 1.6rem;
+    border-radius: 999px;
+    background: var(--ink); color: var(--bg);
+    font-weight: 500;
+    transition: background-color .3s;
+  }
+  .btn span { display: inline-block; pointer-events: none; }
+  .btn i {
+    width: .5rem; height: .5rem; border-radius: 50%;
+    background: var(--accent);
+    transition: transform .4s cubic-bezier(.2, .7, .2, 1);
+  }
+  .btn:hover { background: #262626; }
+  .btn:hover i { transform: scale(1.6); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  .scroll-hint {
+    position: absolute; left: 50%; bottom: 2rem;
+    width: 1px; height: 3.5rem;
+    background: var(--line); overflow: hidden;
+  }
+  .scroll-hint::after {
+    content: ''; position: absolute; inset: 0;
+    background: var(--ink);
+    animation: drip 2.2s cubic-bezier(.6, 0, .3, 1) infinite;
+  }
+  @keyframes drip {
+    0% { transform: translateY(-100%); }
+    60%, 100% { transform: translateY(100%); }
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: clamp(6rem, 14vw, 11rem) 0; }
+  .label { font-size: .85rem; color: var(--muted); margin-bottom: 1.5rem; display: block; }
+  h2 { font-size: clamp(2rem, 5vw, 3.75rem); max-width: 16ch; }
+
+  /* ---------- How it works: steps + animated panel ---------- */
+  .explain {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+    margin-top: clamp(3rem, 7vw, 5rem);
+  }
+  .steps { position: relative; list-style: none; margin: 0; padding: 0 0 0 1.75rem; }
+  .steps::before, .steps::after {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 1px; background: var(--line);
+  }
+  .steps::after { background: var(--accent); transform-origin: top; transform: scaleY(var(--progress, 0)); }
+  .step { position: relative; border-top: 1px solid var(--line); min-height: 42vh; }
+  .step::before { /* marker on the rail */
+    content: ''; position: absolute; left: calc(-1.75rem - 3px); top: 2.25rem;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--bg); box-shadow: 0 0 0 1px var(--line);
+    transition: background-color .4s, box-shadow .4s;
+  }
+  .step.is-active::before { background: var(--accent); box-shadow: 0 0 0 4px rgba(59, 91, 253, .15); }
+  .step button {
+    all: unset;
+    box-sizing: border-box;
+    display: grid; grid-template-columns: 3rem 1fr; gap: .4rem 0;
+    width: 100%; padding: 1.75rem 0;
+    cursor: pointer;
+    opacity: .35;
+    transition: opacity .4s;
+  }
+  .step button:hover, .step.is-active button { opacity: 1; }
+  .step button:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 6px; }
+  .step .n { grid-row: span 2; padding-top: .3rem; font-size: .9rem; color: var(--muted); transition: color .4s; }
+  .step.is-active .n { color: var(--accent); }
+  .step .t { font-size: 1.35rem; font-weight: 500; letter-spacing: -0.02em; }
+  .step .d {
+    color: var(--muted); max-width: 26rem;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .5s, transform .5s cubic-bezier(.2, .7, .2, 1);
+  }
+  .step.is-active .d { opacity: 1; transform: none; }
+
+  .panel {
+    position: sticky; top: 15vh;
+    aspect-ratio: 5 / 4;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .scene {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 3.5rem 9%;
+    opacity: 0; visibility: hidden;
+    transform: scale(.97); filter: blur(6px);
+    transition: opacity .6s, visibility .6s, filter .6s, transform .6s cubic-bezier(.2, .7, .2, 1);
+  }
+  .scene.is-active { opacity: 1; visibility: visible; transform: none; filter: none; }
+  .panel-top {
+    position: absolute; inset: 1.1rem 1.25rem auto; z-index: 1;
+    display: flex; justify-content: space-between;
+    font-size: .8rem; color: var(--muted);
+  }
+  .panel-top .count { font-variant-numeric: tabular-nums; }
+  .status {
+    position: absolute; left: 1.25rem; right: 1.25rem; bottom: 1.1rem;
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .8rem; color: var(--muted);
+  }
+  .status::before {
+    content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: .25; } }
+  .chip {
+    padding: .5rem .95rem;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg);
+    font-size: .85rem; white-space: nowrap;
+  }
+  .chip.dark { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: var(--c); }
+
+  /* scene 1: sync */
+  .s-sync { gap: 1rem; }
+  .s-sync .track { position: relative; flex: 1; height: 44px; }
+  .s-sync .track::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 50%;
+    border-top: 1px dashed #cfcfcc;
+  }
+  .s-sync .fly { position: absolute; inset: 0 auto 0 0; width: calc(100% - 44px); }
+  .s-sync .chip.dark { position: relative; }
+  .s-sync.is-active .chip.dark::after {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit;
+    border: 1px solid var(--ink);
+    animation: ping 1.6s cubic-bezier(0, 0, .2, 1) infinite;
+  }
+  @keyframes ping { from { transform: scale(1); opacity: .5; } to { transform: scale(1.35); opacity: 0; } }
+  .s-sync .fly img { width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .35); }
+
+  /* scene 2: routing */
+  .s-route { flex-direction: column; align-items: stretch; justify-content: center; gap: 1.9rem; }
+  .acct {
+    display: grid; grid-template-columns: 6.5rem 1fr 4.5rem;
+    align-items: center; gap: 1rem;
+    margin: 0 -.75rem; padding: .55rem .75rem;
+    border-radius: 10px;
+    font-size: .9rem;
+    transition: background-color .3s;
+  }
+  .acct.is-target { background: #f3f5ff; }
+  .acct .name { display: flex; align-items: center; gap: .5rem; }
+  .acct .bar { position: relative; height: 8px; border-radius: 99px; background: #efefed; }
+  .acct .bar i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--c); }
+  .acct .drop {
+    position: absolute; right: -16px; top: -42px;
+    width: 32px; height: 32px; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .35);
+    opacity: 0;
+  }
+  .acct em { font-style: normal; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* scene 3: live photo */
+  .s-live .box { position: relative; width: 38%; aspect-ratio: 3 / 4; }
+  .s-live .lp {
+    position: absolute;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .45);
+  }
+  .s-live .still { inset: 0 30% 0 -30%; }
+  .s-live .clip { inset: 0 -30% 0 30%; }
+  .s-live small {
+    position: absolute; left: .6rem; bottom: .6rem;
+    padding: .15rem .45rem; border-radius: 6px;
+    background: rgba(0, 0, 0, .45); color: #fff;
+    font-size: .7rem; letter-spacing: .04em;
+  }
+  .s-live .play {
+    position: absolute; left: 50%; top: 50%;
+    margin: -10px 0 0 -6px;
+    border-style: solid; border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent rgba(255, 255, 255, .9);
+  }
+  .s-live .badge {
+    position: absolute; left: .6rem; top: .6rem; z-index: 2;
+    display: flex; align-items: center; gap: .35rem;
+    padding: .2rem .55rem; border-radius: 99px;
+    background: rgba(255, 255, 255, .92);
+    font-size: .7rem; font-weight: 600; letter-spacing: .08em;
+    opacity: 0;
+  }
+  .s-live .badge::before {
+    content: ''; width: .6rem; height: .6rem; border-radius: 50%;
+    border: 1.5px solid var(--ink); box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px var(--ink);
+  }
+
+  /* scene 4: gallery */
+  .s-grid { flex-direction: column; gap: 1.25rem; }
+  .s-grid .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 70%; }
+  .s-grid .cell { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; }
+  .s-grid .cell .dot { position: absolute; right: 6px; top: 6px; box-shadow: 0 0 0 2px #fff; }
+  .s-grid .legend { display: flex; gap: 1.25rem; font-size: .8rem; color: var(--muted); }
+  .s-grid .legend span { display: flex; align-items: center; gap: .4rem; }
+
+  /* ---------- Gallery (parallax) ---------- */
+  .gallery-head { display: flex; justify-content: space-between; align-items: end; gap: 2rem; flex-wrap: wrap; }
+  .gallery-head p { max-width: 24rem; color: var(--muted); }
+  .tiles {
+    margin-top: clamp(3rem, 7vw, 5rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(.75rem, 2vw, 1.5rem);
+    perspective: 1200px;
+  }
+  .tile {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ececea;
+    will-change: transform;
+  }
+  .tile:nth-child(2) { margin-top: 3rem; }
+  .tile figcaption {
+    position: absolute; left: .75rem; bottom: .75rem;
+    display: flex; align-items: center; gap: .4rem;
+    padding: .3rem .65rem; border-radius: 99px;
+    background: rgba(255, 255, 255, .9);
+    font-size: .78rem;
+  }
+
+  /* ---------- Closing ---------- */
+  .closing { text-align: center; border-top: 1px solid var(--line); }
+  .closing h2 { margin: 0 auto; font-size: clamp(2.5rem, 7vw, 5.5rem); max-width: 12ch; }
+  .closing p { margin: 1.5rem auto 0; color: var(--muted); max-width: 26rem; }
+  footer .wrap {
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    padding-top: 1.5rem; padding-bottom: 2rem;
+    border-top: 1px solid var(--line);
+    font-size: .875rem; color: var(--muted);
+  }
+  footer a { text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (max-width: 768px) {
+    .explain { grid-template-columns: 1fr; gap: 1.5rem; }
+    .panel { order: -1; top: 1rem; z-index: 1; aspect-ratio: 1 / 1; }
+    .step { min-height: 34vh; }
+    .acct { grid-template-columns: 5.5rem 1fr 3.75rem; gap: .75rem; font-size: .8rem; }
+    .s-route { gap: 1.7rem; }
+    .tile:nth-child(2) { margin-top: 1.5rem; }
+    .tile figcaption { font-size: .65rem; left: .4rem; bottom: .4rem; padding: .2rem .45rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .scroll-hint::after { animation: none; }
+    .scene { transition: none; filter: none; transform: none; }
+    .status::before, .s-sync.is-active .chip.dark::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#top">photos-bridge</a>
+  <a href="#how">How it works</a>
+</nav>
+
+<header class="hero" id="top">
+  <div class="orb" aria-hidden="true"></div>
+  <div class="wrap">
+    <h1>
+      <span class="line-mask"><span>Your photos,</span></span>
+      <span class="line-mask"><span class="soft">quietly in sync.</span></span>
+    </h1>
+    <p class="hero-fade">New iCloud photos go to the Google account with the most free space. You do nothing.</p>
+    <div class="cta hero-fade">
+      <a class="btn magnetic" href="#how"><span>See how it works</span><i></i></a>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true"></div>
+</header>
+
+<main>
+  <section id="how">
+    <div class="wrap">
+      <span class="label reveal">How it works</span>
+      <h2 class="reveal">Set it up once. Then forget about it.</h2>
+
+      <div class="explain">
+        <ol class="steps">
+          <li class="step is-active"><button type="button" aria-pressed="true">
+            <span class="n">01</span><span class="t">Continuous sync</span>
+            <span class="d">A worker pulls new photos and videos from iCloud in original quality.</span>
+          </button></li>
+          <li class="step"><button type="button" aria-pressed="false">
+            <span class="n">02</span><span class="t">Storage-aware routing</span>
+            <span class="d">Each file goes to the connected account with the most free space.</span>
+          </button></li>
+          <li class="step"><button type="button" aria-pressed="false">
+            <span class="n">03</span><span class="t">Live Photos kept whole</span>
+            <span class="d">The still and its short clip upload separately, then pair again into one tile.</span>
+          </button></li>
+          <li class="step"><button type="button" aria-pressed="false">
+            <span class="n">04</span><span class="t">One gallery</span>
+            <span class="d">Browse, favorite, and download across every account from one place.</span>
+          </button></li>
+        </ol>
+
+        <div class="panel" aria-hidden="true">
+          <div class="panel-top"><span class="count">01 / 04</span><span class="title">Continuous sync</span></div>
+          <div class="scene s-sync is-active">
+            <p class="status">Checking iCloud for new photos</p>
+            <span class="chip">iCloud</span>
+            <div class="track">
+              <div class="fly"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=120&h=120&q=70&auto=format&fit=crop" alt="" width="44" height="44"></div>
+              <div class="fly"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&h=120&q=70&auto=format&fit=crop" alt="" width="44" height="44"></div>
+              <div class="fly"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=120&h=120&q=70&auto=format&fit=crop" alt="" width="44" height="44"></div>
+            </div>
+            <span class="chip dark">bridge</span>
+          </div>
+
+          <div class="scene s-route">
+            <p class="status">Sends each file to the account with the most free space</p>
+            <div class="acct" style="--c: var(--acct-a)" data-used="72">
+              <span class="name"><span class="dot"></span>Account A</span>
+              <div class="bar"><i style="width: 72%"><span class="drop"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=96&h=96&q=70&auto=format&fit=crop" alt="" width="32" height="32"></span></i></div>
+              <em>28% free</em>
+            </div>
+            <div class="acct" style="--c: var(--acct-b)" data-used="38">
+              <span class="name"><span class="dot"></span>Account B</span>
+              <div class="bar"><i style="width: 38%"><span class="drop"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=96&h=96&q=70&auto=format&fit=crop" alt="" width="32" height="32"></span></i></div>
+              <em>62% free</em>
+            </div>
+            <div class="acct" style="--c: var(--acct-c)" data-used="55">
+              <span class="name"><span class="dot"></span>Account C</span>
+              <div class="bar"><i style="width: 55%"><span class="drop"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=96&h=96&q=70&auto=format&fit=crop" alt="" width="32" height="32"></span></i></div>
+              <em>45% free</em>
+            </div>
+          </div>
+
+          <div class="scene s-live">
+            <p class="status">IMG_2041.HEIC + IMG_2041.MOV, shown as one Live Photo</p>
+            <div class="box">
+              <div class="lp still"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=660&q=70&auto=format&fit=crop" alt="" width="250" height="330"><small>HEIC</small></div>
+              <div class="lp clip"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=660&q=70&auto=format&fit=crop" alt="" width="250" height="330"><span class="play"></span><small>MOV</small></div>
+              <span class="badge">LIVE</span>
+            </div>
+          </div>
+
+          <div class="scene s-grid">
+            <p class="status">9 photos from 3 accounts, in one view</p>
+            <div class="grid">
+              <div class="cell" style="--c: var(--acct-a)"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-b)"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-c)"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-b)"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-a)"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-c)"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-a)"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-c)"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+              <div class="cell" style="--c: var(--acct-b)"><img src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=200&h=200&q=70&auto=format&fit=crop" alt="" width="100" height="100"><span class="dot"></span></div>
+            </div>
+            <div class="legend">
+              <span><span class="dot" style="--c: var(--acct-a)"></span>A</span>
+              <span><span class="dot" style="--c: var(--acct-b)"></span>B</span>
+              <span><span class="dot" style="--c: var(--acct-c)"></span>C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <div class="wrap">
+      <div class="gallery-head">
+        <div>
+          <span class="label reveal">Many accounts</span>
+          <h2 class="reveal">One library.</h2>
+        </div>
+        <p class="reveal">Add a Google account and it joins the pool. When one fills up, uploads move to the next.</p>
+      </div>
+      <div class="tiles">
+        <figure class="tile" data-speed="-6">
+          <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=1066&q=75&auto=format&fit=crop" alt="Sunlit valley with a river" width="600" height="800" loading="lazy">
+          <figcaption><span class="dot" style="--c: var(--acct-a)"></span>Account A</figcaption>
+        </figure>
+        <figure class="tile" data-speed="8">
+          <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=1066&q=75&auto=format&fit=crop" alt="Snowy mountains under a starry sky" width="600" height="800" loading="lazy">
+          <figcaption><span class="dot" style="--c: var(--acct-b)"></span>Account B</figcaption>
+        </figure>
+        <figure class="tile" data-speed="-10">
+          <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=1066&q=75&auto=format&fit=crop" alt="Sunlight through a green forest" width="600" height="800" loading="lazy">
+          <figcaption><span class="dot" style="--c: var(--acct-c)"></span>Account C</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="wrap">
+      <h2 class="reveal">Keep every photo.</h2>
+      <p class="reveal">Deploy two containers, sign in once, and let it run.</p>
+      <div class="cta reveal">
+        <a class="btn magnetic" href="#top"><span>Get started</span><i></i></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>photos-bridge</span>
+    <span>Photos from <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+(() => {
+  const root = document.documentElement;
+
+  /* ---------- Step switching (works without GSAP too) ---------- */
+  const steps = [...document.querySelectorAll('.step')];
+  const scenes = [...document.querySelectorAll('.scene')];
+  const loops = [];
+  let current = 0;
+  const setStep = i => {
+    if (i === current && loops[i] && !loops[i].paused()) return;
+    current = i;
+    steps.forEach((s, j) => {
+      s.classList.toggle('is-active', j === i);
+      s.querySelector('button').setAttribute('aria-pressed', j === i);
+    });
+    scenes.forEach((s, j) => s.classList.toggle('is-active', j === i));
+    document.querySelector('.panel-top .count').textContent = `0${i + 1} / 0${steps.length}`;
+    document.querySelector('.panel-top .title').textContent = steps[i].querySelector('.t').textContent;
+    loops.forEach((tl, j) => (j === i ? tl.restart() : tl.pause()));
+  };
+  steps.forEach((s, i) => s.querySelector('button').addEventListener('click', () => setStep(i)));
+
+  if (!root.classList.contains('motion')) return; // reduced motion: static scenes
+  // If the CDN fails, show all content instead of leaving it hidden.
+  if (!window.gsap || !window.ScrollTrigger) { root.classList.remove('motion'); return; }
+  gsap.registerPlugin(ScrollTrigger);
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const ease = 'power3.out';
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+
+  /* ---------- Hero: masked line rise, then fade ---------- */
+  gsap.set('.hero .wrap', { visibility: 'visible' });
+  gsap.timeline({ delay: 0.15 })
+    .from('.hero h1 .line-mask > span', { yPercent: 110, duration: 1.2, ease: 'power4.out', stagger: 0.12 })
+    .from('.hero-fade', { y: 16, opacity: 0, duration: 0.9, ease, stagger: 0.1 }, '-=0.7');
+
+  /* Orb follows the pointer with a slow lag; drifts on scroll for touch devices */
+  const orb = $('.orb');
+  gsap.set(orb, { x: innerWidth * 0.6, y: innerHeight * 0.45 });
+  if (finePointer) {
+    const ox = gsap.quickTo(orb, 'x', { duration: 1.6, ease });
+    const oy = gsap.quickTo(orb, 'y', { duration: 1.6, ease });
+    addEventListener('pointermove', e => { ox(e.clientX); oy(e.clientY + scrollY); }, { passive: true });
+  } else {
+    gsap.to(orb, { x: innerWidth * 0.3, y: innerHeight * 0.8, ease: 'none',
+      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 } });
+  }
+
+  /* ---------- Buttons: small nudge only while the cursor is on them ---------- */
+  if (finePointer) {
+    $$('.magnetic').forEach(btn => {
+      const label = $('span', btn);
+      const to = (el, p) => gsap.quickTo(el, p, { duration: 0.9, ease: 'power2.out' });
+      const bx = to(btn, 'x'), by = to(btn, 'y'), lx = to(label, 'x'), ly = to(label, 'y');
+      btn.addEventListener('pointermove', e => {
+        const r = btn.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2 - gsap.getProperty(btn, 'x'));
+        const dy = e.clientY - (r.top + r.height / 2 - gsap.getProperty(btn, 'y'));
+        bx(dx * 0.12); by(dy * 0.18);
+        lx(dx * 0.06); ly(dy * 0.08);
+      });
+      btn.addEventListener('pointerleave', () => { bx(0); by(0); lx(0); ly(0); });
+    });
+  }
+
+  /* ---------- Generic reveals ---------- */
+  $$('.reveal').forEach(el => {
+    gsap.fromTo(el, { opacity: 0, y: 30 }, {
+      opacity: 1, y: 0, duration: 1, ease,
+      scrollTrigger: { trigger: el, start: 'top 88%' },
+    });
+  });
+
+  /* ---------- Scene loops ---------- */
+  // 1. Sync: photos travel from iCloud to the bridge.
+  loops.push(gsap.timeline({ paused: true }).to($$('.s-sync .fly'), {
+    keyframes: { xPercent: [0, 100], opacity: [0, 1, 1, 1, 0], easeEach: 'none' },
+    duration: 2.4, ease: 'power1.inOut',
+    stagger: { each: 0.8, repeat: -1 },
+  }));
+
+  // 2. Routing: each photo drops into the account with the most free space.
+  {
+    const accts = $$('.s-route .acct');
+    const bars = accts.map(a => $('.bar i', a));
+    const labels = accts.map(a => $('em', a));
+    const init = accts.map(a => +a.dataset.used);
+    const used = [...init];
+    const status = $('.s-route .status');
+    const target = (k, text) => () => {
+      accts.forEach((a, j) => a.classList.toggle('is-target', j === k));
+      status.textContent = text;
+    };
+    const tl = gsap.timeline({ paused: true, repeat: -1, onUpdate: () => bars.forEach((b, k) => {
+      labels[k].textContent = `${100 - Math.round(b.offsetWidth / b.parentNode.offsetWidth * 100)}% free`;
+    }) });
+    tl.to({}, { duration: 0.3 }); // callbacks at exactly 0 can be skipped on repeat
+    for (let n = 0; n < 6; n++) {
+      const k = used.indexOf(Math.min(...used));
+      used[k] += 8;
+      const drop = $('.drop', accts[k]);
+      const name = $('.name', accts[k]).textContent;
+      tl.add(target(k, `IMG_${2041 + n}.HEIC → ${name}, most free space`))
+        .fromTo(drop, { y: -14, opacity: 0, scale: 1 }, { y: 0, opacity: 1, duration: 0.45, ease })
+        .to(drop, { y: 30, scale: 0.3, opacity: 0, duration: 0.4, ease: 'power2.in' }, '+=0.15')
+        .to(bars[k], { width: `${used[k]}%`, duration: 0.6, ease }, '-=0.1')
+        .to({}, { duration: 0.25 });
+    }
+    tl.add(target(-1, 'Demo resets: free space shown again'), '+=0.8')
+      .to(bars, { width: k => `${init[k]}%`, duration: 0.8, ease: 'power2.inOut' }, '+=0.2');
+    loops.push(tl);
+  }
+
+  // 3. Live Photo: still + clip slide together and become one tile.
+  loops.push(gsap.timeline({ paused: true, repeat: -1, yoyo: true, repeatDelay: 1.4, defaults: { ease: 'power2.inOut' } })
+    .fromTo('.s-live .still', { x: 0, rotation: -5 }, { xPercent: 30, rotation: 0, duration: 1 }, 0.4)
+    .fromTo('.s-live .clip', { x: 0, rotation: 5 }, { xPercent: -30, rotation: 0, duration: 1 }, 0.4)
+    .to('.s-live small, .s-live .play', { opacity: 0, duration: 0.3 }, 1.1)
+    .to('.s-live .clip', { opacity: 0, duration: 0.3 }, 1.3)
+    .fromTo('.s-live .badge', { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(2)' }, 1.4));
+
+  // 4. Gallery: photos from all accounts settle into one grid.
+  loops.push(gsap.timeline({ paused: true, repeat: -1, repeatDelay: 0.3 })
+    .fromTo('.s-grid .cell', { opacity: 0, scale: 0.85 }, {
+      opacity: 1, scale: 1, duration: 0.6, ease, stagger: { each: 0.08, from: 'random' },
+    })
+    .to('.s-grid .cell', { opacity: 0, duration: 0.4, stagger: 0.03 }, '+=2.2'));
+
+  // Scroll picks the step; loops run only while the section is on screen.
+  steps.forEach((s, i) => ScrollTrigger.create({
+    trigger: s, start: 'top 55%', end: 'bottom 55%',
+    onToggle: self => self.isActive && setStep(i),
+  }));
+  const stepList = $('.steps');
+  ScrollTrigger.create({
+    trigger: stepList, start: 'top 55%', end: 'bottom 55%',
+    onUpdate: self => stepList.style.setProperty('--progress', self.progress.toFixed(3)),
+  });
+  ScrollTrigger.create({
+    trigger: '.explain', start: 'top bottom', end: 'bottom top',
+    onToggle: self => (self.isActive ? loops[current].play() : loops[current].pause()),
+  });
+
+  /* ---------- Tiles: scroll parallax at different speeds + soft pointer tilt ---------- */
+  $$('.tile').forEach(tile => {
+    const s = +tile.dataset.speed;
+    gsap.fromTo(tile, { yPercent: -s }, { yPercent: s, ease: 'none',
+      scrollTrigger: { trigger: '.tiles', start: 'top bottom', end: 'bottom top', scrub: 0.8 } });
+  });
+  if (finePointer) {
+    const tiles = $('.tiles');
+    const rx = $$('.tile').map(t => gsap.quickTo(t, 'rotationX', { duration: 0.8, ease }));
+    const ry = $$('.tile').map(t => gsap.quickTo(t, 'rotationY', { duration: 0.8, ease }));
+    tiles.addEventListener('pointermove', e => {
+      const r = tiles.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      rx.forEach(f => f(-py * 8)); ry.forEach(f => f(px * 8));
+    });
+    tiles.addEventListener('pointerleave', () => { rx.forEach(f => f(0)); ry.forEach(f => f(0)); });
+  }
+})();
+</script>
+</body>
+</html>
