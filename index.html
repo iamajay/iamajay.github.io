@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>photos-bridge</title>
-<meta name="description" content="photos-bridge moves new iCloud photos to the Google Photos account with the most free space.">
+<meta name="description" content="photos-bridge saves new iCloud photos to Google Photos and Telegram, side by side. Unlimited storage, and iCloud stays free.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
@@ -55,6 +55,7 @@
     font-size: .95rem;
   }
   nav .logo { font-weight: 600; letter-spacing: -0.02em; }
+  nav .links { display: flex; gap: 1.5rem; }
   nav a:not(.logo) { color: var(--muted); transition: color .2s; }
   nav a:not(.logo):hover { color: var(--ink); }
 
@@ -222,7 +223,14 @@
   .s-sync .fly img { width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .35); }
 
   /* scene 2: routing */
-  .s-route { flex-direction: column; align-items: stretch; justify-content: center; gap: 1.9rem; }
+  .s-route, .s-tg { flex-direction: column; align-items: stretch; justify-content: center; gap: 1.9rem; }
+  .s-tg .name svg { width: .8rem; height: .8rem; color: var(--c); }
+  .s-tg .bar.unlimited i {
+    background: repeating-linear-gradient(90deg, var(--c) 0 6px, transparent 6px 11px);
+    opacity: .7;
+  }
+  .s-tg.is-active .bar.unlimited i { animation: flow 1s linear infinite; }
+  @keyframes flow { to { background-position: 11px 0; } }
   .acct {
     display: grid; grid-template-columns: 6.5rem 1fr 4.5rem;
     align-items: center; gap: 1rem;
@@ -312,6 +320,93 @@
     font-size: .78rem;
   }
 
+  /* ---------- Pricing ---------- */
+  #pricing { border-top: 1px solid var(--line); }
+  .pricing-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(2rem, 6vw, 6rem); align-items: start;
+  }
+  .pricing-grid .intro p { margin-top: 1.5rem; max-width: 24rem; color: var(--muted); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 2.5rem; }
+  .currency { position: relative; }
+  .currency select {
+    appearance: none; -webkit-appearance: none;
+    padding: .75rem 2.4rem .75rem 1.1rem;
+    border: 1px solid var(--line); border-radius: 999px; background: #fff;
+    font: inherit; font-size: .95rem; color: var(--ink);
+    cursor: pointer;
+  }
+  .currency select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .currency::after { /* chevron */
+    content: ''; position: absolute; right: 1.1rem; top: 50%;
+    width: .4rem; height: .4rem;
+    border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .billing {
+    position: relative; display: inline-flex;
+    padding: 4px;
+    border: 1px solid var(--line); border-radius: 999px; background: #fff;
+  }
+  .billing button {
+    all: unset; position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .6rem 1.2rem; border-radius: 999px;
+    font-size: .95rem; cursor: pointer;
+    color: var(--muted); transition: color .35s;
+  }
+  .billing button[aria-pressed="true"] { color: var(--bg); }
+  .billing button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .billing .save { font-size: .75rem; color: var(--accent); }
+  .billing button[aria-pressed="true"] .save { color: #a9b8ff; }
+  .billing .pill {
+    position: absolute; left: 0; top: 4px; bottom: 4px;
+    border-radius: 999px; background: var(--ink);
+    transition: transform .5s cubic-bezier(.2, .7, .2, 1), width .5s cubic-bezier(.2, .7, .2, 1);
+  }
+  .plan {
+    border: 1px solid var(--line); border-radius: 24px; background: #fff;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .plan-head { display: flex; justify-content: space-between; align-items: center; font-size: .95rem; font-weight: 500; }
+  .plan .tag { padding: .25rem .65rem; border-radius: 99px; background: #f3f5ff; color: var(--accent); font-size: .75rem; }
+  .price { display: flex; align-items: baseline; gap: .75rem; margin-top: 2rem; white-space: nowrap; }
+  .price .was {
+    position: relative; color: var(--muted); font-size: 1.25rem;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .4s, transform .4s;
+  }
+  .price .was::after {
+    content: ''; position: absolute; left: -3px; right: -3px; top: 55%;
+    height: 1.5px; background: currentColor;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s cubic-bezier(.6, 0, .2, 1) .25s;
+  }
+  .price.discounted .was { opacity: 1; transform: none; }
+  .price.discounted .was::after { transform: scaleX(1); }
+  .price .now {
+    font-size: clamp(3.5rem, 7vw, 5rem); font-weight: 500;
+    letter-spacing: -0.04em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .price .cur { font-size: .5em; vertical-align: .55em; margin-right: .05em; }
+  .price .per { color: var(--muted); }
+  .plan .note { margin-top: .75rem; font-size: .9rem; color: var(--muted); }
+  .incl {
+    list-style: none; margin: 2rem 0 0; padding: 1.5rem 0 0;
+    border-top: 1px solid var(--line);
+    display: grid; gap: .8rem;
+  }
+  .incl li { display: flex; align-items: center; gap: .85rem; }
+  .incl li::before {
+    content: ''; flex: none; width: .8rem; height: .45rem;
+    border-left: 1.5px solid var(--accent); border-bottom: 1.5px solid var(--accent);
+    transform: rotate(-45deg) translateY(-2px);
+  }
+  .plan .btn { margin-top: 2rem; width: 100%; justify-content: center; }
+  .plan .fine { margin-top: 1rem; text-align: center; font-size: .8rem; color: var(--muted); }
+
   /* ---------- Closing ---------- */
   .closing { text-align: center; border-top: 1px solid var(--line); }
   .closing h2 { margin: 0 auto; font-size: clamp(2.5rem, 7vw, 5.5rem); max-width: 12ch; }
@@ -329,15 +424,16 @@
     .panel { order: -1; top: 1rem; z-index: 1; aspect-ratio: 1 / 1; }
     .step { min-height: 34vh; }
     .acct { grid-template-columns: 5.5rem 1fr 3.75rem; gap: .75rem; font-size: .8rem; }
-    .s-route { gap: 1.7rem; }
+    .s-route, .s-tg { gap: 1.7rem; }
     .tile:nth-child(2) { margin-top: 1.5rem; }
+    .pricing-grid { grid-template-columns: 1fr; }
     .tile figcaption { font-size: .65rem; left: .4rem; bottom: .4rem; padding: .2rem .45rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .scroll-hint::after { animation: none; }
     .scene { transition: none; filter: none; transform: none; }
-    .status::before, .s-sync.is-active .chip.dark::after { animation: none; }
+    .status::before, .s-sync.is-active .chip.dark::after, .s-tg.is-active .bar.unlimited i { animation: none; }
   }
 </style>
 </head>
@@ -345,7 +441,7 @@
 
 <nav>
   <a class="logo" href="#top">photos-bridge</a>
-  <a href="#how">How it works</a>
+  <div class="links"><a href="#how">How it works</a><a href="#pricing">Pricing</a></div>
 </nav>
 
 <header class="hero" id="top">
@@ -355,7 +451,7 @@
       <span class="line-mask"><span>Your photos,</span></span>
       <span class="line-mask"><span class="soft">quietly in sync.</span></span>
     </h1>
-    <p class="hero-fade">New iCloud photos go to the Google account with the most free space. You do nothing.</p>
+    <p class="hero-fade">New iCloud photos go to Google Photos and Telegram, side by side. Unlimited storage, iCloud stays free, and you do nothing.</p>
     <div class="cta hero-fade">
       <a class="btn magnetic" href="#how"><span>See how it works</span><i></i></a>
     </div>
@@ -387,10 +483,14 @@
             <span class="n">04</span><span class="t">One gallery</span>
             <span class="d">Browse, favorite, and download across every account from one place.</span>
           </button></li>
+          <li class="step"><button type="button" aria-pressed="false">
+            <span class="n">05</span><span class="t">Unlimited with Telegram</span>
+            <span class="d">Every photo is also saved to Telegram, which has no storage limit. Then the space in iCloud is freed for you.</span>
+          </button></li>
         </ol>
 
         <div class="panel" aria-hidden="true">
-          <div class="panel-top"><span class="count">01 / 04</span><span class="title">Continuous sync</span></div>
+          <div class="panel-top"><span class="count">01 / 05</span><span class="title">Continuous sync</span></div>
           <div class="scene s-sync is-active">
             <p class="status">Checking iCloud for new photos</p>
             <span class="chip">iCloud</span>
@@ -449,6 +549,20 @@
               <span><span class="dot" style="--c: var(--acct-c)"></span>C</span>
             </div>
           </div>
+
+          <div class="scene s-tg">
+            <p class="status">Saved to Telegram, then iCloud space is freed</p>
+            <div class="acct icloud" style="--c: var(--acct-c)">
+              <span class="name"><span class="dot"></span>iCloud</span>
+              <div class="bar"><i style="width: 20%"></i></div>
+              <em>20% full</em>
+            </div>
+            <div class="acct tg" style="--c: #229ed9">
+              <span class="name"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.4 3.3 2.9 10.5c-1.1.4-1 1.9.1 2.2l4.5 1.4 1.8 5.5c.3.9 1.4 1.1 2 .4l2.6-2.5 4.5 3.3c.8.6 1.9.2 2.1-.8l3-14.6c.3-1.2-.9-2.2-2.1-1.6Z"/></svg>Telegram</span>
+              <div class="bar unlimited"><i style="width: 100%"><span class="drop"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=96&h=96&q=70&auto=format&fit=crop" alt="" width="32" height="32"></span></i></div>
+              <em>No limit</em>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -461,7 +575,7 @@
           <span class="label reveal">Many accounts</span>
           <h2 class="reveal">One library.</h2>
         </div>
-        <p class="reveal">Add a Google account and it joins the pool. When one fills up, uploads move to the next.</p>
+        <p class="reveal">Google accounts and Telegram work side by side. Google fills by free space. Telegram has no limit.</p>
       </div>
       <div class="tiles">
         <figure class="tile" data-speed="-6">
@@ -474,8 +588,50 @@
         </figure>
         <figure class="tile" data-speed="-10">
           <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=1066&q=75&auto=format&fit=crop" alt="Sunlight through a green forest" width="600" height="800" loading="lazy">
-          <figcaption><span class="dot" style="--c: var(--acct-c)"></span>Account C</figcaption>
+          <figcaption><span class="dot" style="--c: #229ed9"></span>Telegram</figcaption>
         </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap pricing-grid">
+      <div class="intro">
+        <span class="label reveal">Pricing</span>
+        <h2 class="reveal">One plan. Every photo.</h2>
+        <p class="reveal">Launch price for early users. Same features on both plans.</p>
+        <div class="controls reveal">
+          <div class="billing" role="group" aria-label="Billing period">
+            <span class="pill" aria-hidden="true"></span>
+            <button type="button" data-period="monthly" aria-pressed="true">Monthly</button>
+            <button type="button" data-period="yearly" aria-pressed="false">Yearly <span class="save">Save 16%</span></button>
+          </div>
+          <span class="currency">
+            <select aria-label="Currency">
+              <option value="USD">USD $</option>
+              <option value="INR">INR ₹</option>
+            </select>
+          </span>
+        </div>
+      </div>
+      <div class="plan reveal">
+        <div class="plan-head"><span>photos-bridge</span><span class="tag">Launch price</span></div>
+        <div class="price discounted" aria-live="polite">
+          <s class="was">$2</s>
+          <span class="now"><span class="cur">$</span><span class="amt">0.99</span></span>
+          <span class="per">/ month</span>
+        </div>
+        <p class="note">Billed monthly. Cancel anytime.</p>
+        <ul class="incl">
+          <li>Unlimited iCloud photos and videos</li>
+          <li>Unlimited storage with Telegram</li>
+          <li>Any number of Google accounts</li>
+          <li>Original quality uploads</li>
+          <li>Live Photos and albums kept</li>
+          <li>One gallery with favorites and downloads</li>
+        </ul>
+        <a class="btn" href="#top"><span>Start for $0.99</span><i></i></a>
+        <p class="fine">Prices in USD. Taxes may apply.</p>
       </div>
     </div>
   </section>
@@ -483,7 +639,7 @@
   <section class="closing">
     <div class="wrap">
       <h2 class="reveal">Keep every photo.</h2>
-      <p class="reveal">Deploy two containers, sign in once, and let it run.</p>
+      <p class="reveal">Unlimited storage, a free iCloud, and nothing to do. Sign in once and let it run.</p>
       <div class="cta reveal">
         <a class="btn magnetic" href="#top"><span>Get started</span><i></i></a>
       </div>
@@ -522,6 +678,66 @@
     loops.forEach((tl, j) => (j === i ? tl.restart() : tl.pause()));
   };
   steps.forEach((s, i) => s.querySelector('button').addEventListener('click', () => setStep(i)));
+
+  /* ---------- Pricing toggle (works without GSAP too) ---------- */
+  const PRICES = {
+    USD: { sym: '$', locale: 'en-US', dec: 2, monthly: { was: 2, now: 0.99 }, yearly: { was: 12, now: 9.99 } },
+    INR: { sym: '₹', locale: 'en-IN', dec: 0, monthly: { was: 179, now: 89 }, yearly: { was: 1099, now: 899 } },
+  };
+  const currencySel = document.querySelector('.currency select');
+  let currency = currencySel.value; // browsers may restore the last choice on reload
+  const price = document.querySelector('.price');
+  const amt = price.querySelector('.amt');
+  const pill = document.querySelector('.billing .pill');
+  const periodBtns = [...document.querySelectorAll('.billing button')];
+  const activePeriod = () => periodBtns.find(b => b.getAttribute('aria-pressed') === 'true');
+  const fmt = (v, dec = PRICES[currency].dec) =>
+    v.toLocaleString(PRICES[currency].locale, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const canAnimate = () => root.classList.contains('motion') && !!window.gsap;
+  let priceTl;
+  const movePill = () => {
+    const b = activePeriod();
+    pill.style.width = `${b.offsetWidth}px`;
+    pill.style.transform = `translateX(${b.offsetLeft}px)`;
+  };
+  // Shows the original price, strikes it, then counts down to the discount.
+  const renderPrice = (key, animate) => {
+    const c = PRICES[currency], p = c[key];
+    price.querySelector('.cur').textContent = c.sym;
+    price.querySelector('.was').textContent = c.sym + fmt(p.was, 0);
+    price.querySelector('.per').textContent = key === 'monthly' ? '/ month' : '/ year';
+    document.querySelector('.plan .note').textContent = key === 'monthly'
+      ? 'Billed monthly. Cancel anytime.'
+      : `Billed once a year, about ${c.sym}${fmt(p.now / 12)} a month.`;
+    document.querySelector('.plan .btn span').textContent = `Start for ${c.sym}${fmt(p.now)}`;
+    document.querySelector('.plan .fine').textContent = `Prices in ${currency}. Taxes may apply.`;
+    document.querySelector('.billing .save').textContent =
+      `Save ${Math.round((1 - c.yearly.now / (c.monthly.now * 12)) * 100)}%`;
+    priceTl?.kill();
+    if (!animate) { amt.textContent = fmt(p.now); price.classList.add('discounted'); return; }
+    price.classList.remove('discounted');
+    amt.textContent = fmt(p.was);
+    const o = { v: p.was };
+    priceTl = gsap.timeline()
+      .add(() => price.classList.add('discounted'), 0.45)
+      .to('.price .now', { color: '#3b5bfd', duration: 0.3 }, 0.7)
+      .to(o, { v: p.now, duration: 1, ease: 'power3.out', onUpdate: () => { amt.textContent = fmt(o.v); } }, 0.7)
+      .to('.price .now', { color: '#111111', duration: 0.8 }, 1.7);
+  };
+  periodBtns.forEach(b => b.addEventListener('click', () => {
+    periodBtns.forEach(x => x.setAttribute('aria-pressed', x === b));
+    movePill();
+    renderPrice(b.dataset.period, canAnimate());
+  }));
+  currencySel.addEventListener('change', () => {
+    currency = currencySel.value;
+    renderPrice(activePeriod().dataset.period, canAnimate());
+    movePill(); // "Save N%" text width can change
+  });
+  renderPrice(activePeriod().dataset.period, false);
+  movePill();
+  addEventListener('resize', movePill, { passive: true });
+  document.fonts?.ready.then(movePill);
 
   if (!root.classList.contains('motion')) return; // reduced motion: static scenes
   // If the CDN fails, show all content instead of leaving it hidden.
@@ -630,6 +846,25 @@
     })
     .to('.s-grid .cell', { opacity: 0, duration: 0.4, stagger: 0.03 }, '+=2.2'));
 
+  // 5. Telegram: each photo is saved to Telegram, and iCloud fills less.
+  {
+    const icl = $('.s-tg .icloud .bar i');
+    const iclLabel = $('.s-tg .icloud em');
+    const drop = $('.s-tg .tg .drop');
+    const tl = gsap.timeline({ paused: true, repeat: -1, onUpdate: () => {
+      iclLabel.textContent = `${Math.round(icl.offsetWidth / icl.parentNode.offsetWidth * 100)}% full`;
+    } });
+    tl.fromTo(icl, { width: '92%' }, { width: '92%', duration: 0.3 });
+    for (let n = 1; n <= 4; n++) {
+      tl.fromTo(drop, { y: -14, opacity: 0, scale: 1 }, { y: 0, opacity: 1, duration: 0.45, ease })
+        .to(drop, { y: 30, scale: 0.3, opacity: 0, duration: 0.4, ease: 'power2.in' }, '+=0.15')
+        .to(icl, { width: `${92 - n * 18}%`, duration: 0.6, ease }, '-=0.1')
+        .to({}, { duration: 0.25 });
+    }
+    tl.to(icl, { width: '92%', duration: 0.8, ease: 'power2.inOut' }, '+=1.2');
+    loops.push(tl);
+  }
+
   // Scroll picks the step; loops run only while the section is on screen.
   steps.forEach((s, i) => ScrollTrigger.create({
     trigger: s, start: 'top 55%', end: 'bottom 55%',
@@ -663,6 +898,18 @@
     });
     tiles.addEventListener('pointerleave', () => { rx.forEach(f => f(0)); ry.forEach(f => f(0)); });
   }
+
+  /* ---------- Pricing: start at the original price, discount on first view ---------- */
+  price.classList.remove('discounted');
+  amt.textContent = fmt(PRICES[currency][activePeriod().dataset.period].was);
+  ScrollTrigger.create({
+    trigger: '.plan', start: 'top 70%', once: true,
+    onEnter: () => renderPrice(activePeriod().dataset.period, true),
+  });
+  gsap.from('.incl li', {
+    opacity: 0, y: 12, duration: 0.6, ease, stagger: 0.07,
+    scrollTrigger: { trigger: '.plan', start: 'top 70%' },
+  });
 })();
 </script>
 </body>
